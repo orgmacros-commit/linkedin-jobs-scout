@@ -52,27 +52,14 @@ export default async function handler(req, res) {
         // To prevent exceeding Apify memory limits on free tiers, pass memory=512 via query string
         const apiUrl = `https://api.apify.com/v2/acts/worldunboxer~rapid-linkedin-scraper/runs?token=${APIFY_TOKEN}&memory=1024`;
 
-        // Map Metro cities to their exact LinkedIn geoIds to override Apify proxies
-        const geoIdMap = {
-            'Bengaluru, Karnataka, India': '105214831',
-            'Mumbai, Maharashtra, India': '104300300',
-            'Delhi, India': '103671728',
-            'Hyderabad, Telangana, India': '105556991',
-            'Pune, Maharashtra, India': '106888327',
-            'Chennai, Tamil Nadu, India': '107410880',
-            'India': '102713980'
-        };
-
-        const geoId = geoIdMap[location] || '102713980'; // Default to India
-        const encodedLocation = encodeURIComponent(location);
-        const keywords = encodeURIComponent(`${role} ${jobType}`);
-        const linkedInUrl = `https://www.linkedin.com/jobs/search/?keywords=${keywords}&location=${encodedLocation}&geoId=${geoId}&f_TPR=r86400`;
-
+        // We send 'keyword' and 'location' as strict JSON top-level properties.
+        // This explicitly prevents worldunboxer from defaulting to US proxies!
         const runResponse = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                searchUrls: [{ url: linkedInUrl }],
+                keyword: `${role} ${jobType}`.trim(),
+                location: location,
                 limit: 15
             })
         });
