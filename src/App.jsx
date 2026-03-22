@@ -17,33 +17,26 @@ function App() {
     setIsLoading(true);
     setError(null);
     setJobs([]);
-    setStatusMessage('Searching LinkedIn for the latest postings...');
+    setStatusMessage('Starting connection to LinkedIn Search...');
 
     try {
-      const result = await searchJobs(role, jobType);
+      let result = await searchJobs(role, jobType);
+
+      let attempts = 0;
+      // Continue polling until we receive an array (results) or reach max attempts
+      while (result.status === 'processing' && attempts < 15) {
+        setStatusMessage(`Extracting jobs (${attempts + 1}/15)... LinkedIn takes a moment.`);
+        await new Promise(r => setTimeout(r, 6000)); // Poll every 6 seconds
+        result = await searchJobs(role, jobType, result.datasetId);
+        attempts++;
+      }
 
       if (result.status === 'processing') {
-        setStatusMessage(result.message);
-        // Retry polling loop (simpler version for UX)
-        let attempts = 0;
-        let successful = false;
-        while (attempts < 3 && !successful) {
-          await new Promise(r => setTimeout(r, 8000));
-          attempts++;
-          const retryResult = await searchJobs(role, jobType);
-          if (Array.isArray(retryResult) && retryResult.length > 0) {
-            setJobs(retryResult);
-            successful = true;
-          }
-        }
-        if (!successful && jobs.length === 0) {
-          setError('LinkedIn is taking a long time. Please try clicking search again in a moment.');
-        }
-      } else {
+        setError('Search timed out after 90 seconds. LinkedIn might be blocking the request.');
+      } else if (Array.isArray(result)) {
         setJobs(result);
       }
     } catch (err) {
-      // SHOW SPECIFIC ERROR
       setError(`Search Error: ${err.message || 'Something went wrong.'}`);
       console.error(err);
     } finally {
@@ -132,7 +125,7 @@ function App() {
                     <td className="location">{job.location}</td>
                     <td className="salary">{job.salary}</td>
                     <td className="applicants">
-                      <span className={`badge ${job.applicants < 10 ? 'early' : ''}`}>
+                      <span className={`badge ${job.applicants < 10 && typeof job.applicants === 'number' ? 'early' : ''}`}>
                         {job.applicants}
                       </span>
                     </td>
@@ -155,7 +148,7 @@ function App() {
       </main>
 
       <footer className="footer">
-        <p>Inspired by the Claude + Apify Workflow • Built for Buildathon 2026</p>
+        <p>Powered by Real Apify Actors • Built for Buildathon 2026</p>
       </footer>
     </div>
   );

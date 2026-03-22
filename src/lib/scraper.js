@@ -1,8 +1,5 @@
-// Frontend scraper wrapper that calls the Vercel Serverless Function
-// This allows for actual scraping using the Node.js SDK on the server side
-
-export const searchJobs = async (role, jobType) => {
-    console.log(`🚀 Triggering live search for: ${role} (${jobType})`);
+export const searchJobs = async (role, jobType, datasetId = null) => {
+    console.log(`🚀 Triggering live search for: ${role} (${jobType}) [Dataset: ${datasetId || 'NEW'}]`);
 
     try {
         const response = await fetch('/api/search', {
@@ -10,7 +7,7 @@ export const searchJobs = async (role, jobType) => {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ role, jobType }),
+            body: JSON.stringify({ role, jobType, datasetId }),
         });
 
         if (!response.ok) {
@@ -18,12 +15,10 @@ export const searchJobs = async (role, jobType) => {
             throw new Error(errorData.error || 'Failed to fetch jobs');
         }
 
-        const results = await response.json();
-        return results;
+        return await response.json();
 
     } catch (error) {
         console.error('❌ Search Error:', error);
-        // You could decide to return mock data here as a fallback or just throw the error
         throw error;
     }
 };
