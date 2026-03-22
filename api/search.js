@@ -124,9 +124,10 @@ export default async function handler(req, res) {
 
             const linkedInUrl = `https://www.linkedin.com/jobs/search/?keywords=${keywords}&location=${encodedLocation}&geoId=${geoId}${expParam}&f_TPR=r86400`;
 
+            const expSuffix = experience !== 'Any' ? ` ${experience}` : '';
             reqBody = {
                 searchUrls: [{ url: linkedInUrl }],
-                keyword: `${role} ${jobType}`.trim(),
+                keyword: `${role} ${jobType}${expSuffix}`.trim(),
                 location: location,
                 limit: 15
             };
