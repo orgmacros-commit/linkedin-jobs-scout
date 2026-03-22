@@ -1,3 +1,4 @@
+import 'proxy-agent';
 import { ApifyClient } from 'apify-client';
 
 export default async function handler(req, res) {
@@ -17,15 +18,17 @@ export default async function handler(req, res) {
     });
 
     try {
+        // LinkedIn Jobs Scraper actor
         const run = await client.actor('rip_crawler/linkedin-jobs-scraper').call({
             searchQuery: role,
             location: 'Worldwide',
-            publishedAt: 'past24h',
-            maxItems: 20
+            publishedAt: 'past24h', // As per the guide's request
+            maxItems: 10 // Reduced for speed on Vercel
         });
 
         const { items } = await client.dataset(run.defaultDatasetId).listItems();
 
+        // Transform to match the structured table requirements
         const results = items.map(item => ({
             company: item.companyName || 'N/A',
             title: item.title || 'N/A',
@@ -37,6 +40,7 @@ export default async function handler(req, res) {
         }));
 
         return res.status(200).json(results);
+
     } catch (error) {
         console.error('Apify Actor Error:', error);
         return res.status(500).json({ error: error.message });
