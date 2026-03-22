@@ -8,6 +8,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [jobs, setJobs] = useState([]);
   const [error, setError] = useState(null);
+  const [statusMessage, setStatusMessage] = useState('');
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -16,15 +17,32 @@ function App() {
     setIsLoading(true);
     setError(null);
     setJobs([]);
+    setStatusMessage('Searching LinkedIn for the latest postings...');
 
     try {
-      const results = await searchJobs(role, jobType);
-      setJobs(results);
+      // 1. First attempt
+      const result = await searchJobs(role, jobType);
+
+      // 2. Handle partial or pending results
+      if (result.status === 'processing') {
+        setStatusMessage(result.message);
+        // Automatically attempt one retry after 10 seconds
+        await new Promise(r => setTimeout(r, 10000));
+        const secondAttempt = await searchJobs(role, jobType);
+        if (secondAttempt.length > 0) {
+          setJobs(secondAttempt);
+        } else {
+          setError('LinkedIn is busy. Please try again in 1 minute.');
+        }
+      } else {
+        setJobs(result);
+      }
     } catch (err) {
-      setError('Failed to fetch jobs. Please check your connection or API key.');
+      setError('LinkedIn Search Error. Please try again or check your API key.');
       console.error(err);
     } finally {
       setIsLoading(false);
+      setStatusMessage('');
     }
   };
 
@@ -77,9 +95,10 @@ function App() {
           </form>
         </div>
 
+        {statusMessage && <div className="loading-state glass">{statusMessage}</div>}
         {error && <div className="error-message glass">{error}</div>}
 
-        {isLoading && (
+        {isLoading && !statusMessage && (
           <div className="loading-state glass">
             <div className="claude-shimmer"></div>
             <p>Wait, I'm checking LinkedIn for the latest postings...</p>
@@ -125,7 +144,7 @@ function App() {
           </div>
         )}
 
-        {!isLoading && role && jobs.length === 0 && !error && (
+        {!isLoading && role && jobs.length === 0 && !error && !statusMessage && (
           <div className="empty-state glass">No jobs found in the last 24 hours for this role.</div>
         )}
       </main>
