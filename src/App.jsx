@@ -5,7 +5,7 @@ import './App.css';
 function App() {
   const [role, setRole] = useState('');
   const [jobType, setJobType] = useState('Full-time');
-  const [location, setLocation] = useState('Bengaluru, India');
+  const [location, setLocation] = useState('Bengaluru, Karnataka, India');
   const [isLoading, setIsLoading] = useState(false);
   const [jobs, setJobs] = useState([]);
   const [error, setError] = useState(null);
