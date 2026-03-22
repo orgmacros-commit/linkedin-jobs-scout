@@ -39,6 +39,9 @@ body {
   filter: blur(80px);
   opacity: 0.15;
   animation: float 20s infinite ease-in-out;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  /* Hardware acceleration */
 }
 
 .sphere-1 {
@@ -98,6 +101,7 @@ body {
 .highlight {
   background: linear-gradient(135deg, #00d2ff, #3a7bd5);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -128,6 +132,9 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  transform: translateZ(0);
+  /* Force compositor layer to optimize backdrop-filter */
+  will-change: transform;
 }
 
 /* Search Form */

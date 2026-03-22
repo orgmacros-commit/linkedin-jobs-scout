@@ -1,6 +1,26 @@
-import { useState } from 'react';
+import { useState, memo, useMemo } from 'react';
 import { searchJobs } from './lib/scraper';
 import './App.css';
+
+// 🚀 Performance Optimization: Memoized Background prevents heavy CSS blurs from re-calculating on every keystroke
+const BackgroundGlow = memo(() => (
+  <div className="background-glow">
+    <div className="glow-sphere sphere-1"></div>
+    <div className="glow-sphere sphere-2"></div>
+  </div>
+));
+BackgroundGlow.displayName = 'BackgroundGlow';
+
+const Header = memo(() => (
+  <header className="header">
+    <div className="logo">
+      <span className="logo-icon">🔍</span>
+      <h1 className="logo-text">LinkedIn Job <span className="highlight">Scout</span></h1>
+    </div>
+    <p className="subtitle">Find your next role in the last 24 hours</p>
+  </header>
+));
+Header.displayName = 'Header';
 
 function App() {
   const [role, setRole] = useState('');
@@ -27,10 +47,9 @@ function App() {
       let result = await searchJobs(role, jobType, location, experience, searchMode, extraKeywords);
 
       let attempts = 0;
-      // Continue polling until we receive an array (results) or reach max attempts
       while (result.status === 'processing' && attempts < 15) {
         setStatusMessage(`Extracting ${searchMode} (${attempts + 1}/15)... LinkedIn takes a moment.`);
-        await new Promise(r => setTimeout(r, 6000)); // Poll every 6 seconds
+        await new Promise(r => setTimeout(r, 6000));
         result = await searchJobs(role, jobType, location, experience, searchMode, extraKeywords, result.datasetId);
         attempts++;
       }
@@ -49,20 +68,53 @@ function App() {
     }
   };
 
+  // 🚀 Performance Optimization: Only re-render the results list if jobs actually change
+  const jobList = useMemo(() => {
+    if (jobs.length === 0) return null;
+    return (
+      <div className="results-table-container glass animate-in">
+        <table className="results-table">
+          <thead>
+            <tr>
+              <th>Company</th>
+              <th>Role</th>
+              <th>Location</th>
+              <th>Salary Range</th>
+              <th>Applicants</th>
+              <th>Posted</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {jobs.map((job, index) => (
+              <tr key={index} className="job-row">
+                <td className="company-name">{job.company}</td>
+                <td className="role-title">{job.title}</td>
+                <td className="location">{job.location}</td>
+                <td className="salary">{job.salary}</td>
+                <td className="applicants">
+                  <span className={`badge ${job.applicants < 10 && typeof job.applicants === 'number' ? 'early' : ''}`}>
+                    {typeof job.applicants === 'number' ? job.applicants : 'N/A'}
+                  </span>
+                </td>
+                <td className="posted-date">{job.postedAt}</td>
+                <td className="action">
+                  <a href={job.link} target="_blank" rel="noopener noreferrer" className="apply-link">
+                    Apply Now
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }, [jobs]);
+
   return (
     <div className="app-container">
-      <div className="background-glow">
-        <div className="glow-sphere sphere-1"></div>
-        <div className="glow-sphere sphere-2"></div>
-      </div>
-
-      <header className="header">
-        <div className="logo">
-          <span className="logo-icon">🔍</span>
-          <h1 className="logo-text">LinkedIn Job <span className="highlight">Scout</span></h1>
-        </div>
-        <p className="subtitle">Find your next role in the last 24 hours</p>
-      </header>
+      <BackgroundGlow />
+      <Header />
 
       <main className="main-content">
         <div className="search-card glass">
@@ -153,44 +205,7 @@ function App() {
 
         {error && <div className="error-message glass">{error}</div>}
 
-        {!isLoading && jobs.length > 0 && (
-          <div className="results-table-container glass animate-in">
-            <table className="results-table">
-              <thead>
-                <tr>
-                  <th>Company</th>
-                  <th>Role</th>
-                  <th>Location</th>
-                  <th>Salary Range</th>
-                  <th>Applicants</th>
-                  <th>Posted</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {jobs.map((job, index) => (
-                  <tr key={index} className="job-row">
-                    <td className="company-name">{job.company}</td>
-                    <td className="role-title">{job.title}</td>
-                    <td className="location">{job.location}</td>
-                    <td className="salary">{job.salary}</td>
-                    <td className="applicants">
-                      <span className={`badge ${job.applicants < 10 && typeof job.applicants === 'number' ? 'early' : ''}`}>
-                        {typeof job.applicants === 'number' ? job.applicants : 'N/A'}
-                      </span>
-                    </td>
-                    <td className="posted-date">{job.postedAt}</td>
-                    <td className="action">
-                      <a href={job.link} target="_blank" rel="noopener noreferrer" className="apply-link">
-                        Apply Now
-                      </a>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        {!isLoading && jobList}
 
         {!isLoading && role && jobs.length === 0 && !error && !statusMessage && (
           <div className="empty-state glass">No recently posted jobs found. Try adjusting keywords or location.</div>
