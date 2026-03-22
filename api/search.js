@@ -87,8 +87,10 @@ export default async function handler(req, res) {
 
             // Exact google dork string to find people hiring for this specific role and location
             const expKeyword = experience !== 'Any' ? `"${experience}" OR "years"` : "";
+            // Wrap role in quotes for exact match, add "intitle" for posts to find actual hiring intent
             const extraDork = extraKeywords ? extraKeywords.split(',').map(k => `"${k.trim()}"`).join(' ') : "";
-            const dork = `site:linkedin.com/posts "hiring" OR "looking for" "${role}" "${location}" ${expKeyword} ${extraDork}`.trim();
+            const intentKeywords = 'intitle:"hiring" OR "we are hiring" OR "I am hiring"';
+            const dork = `site:linkedin.com/posts ${intentKeywords} "${role}" "${location}" ${expKeyword} ${extraDork}`.trim();
 
             reqBody = {
                 queries: dork,
@@ -98,7 +100,8 @@ export default async function handler(req, res) {
         } else {
             apiUrl = `https://api.apify.com/v2/acts/worldunboxer~rapid-linkedin-scraper/runs?token=${APIFY_TOKEN}&memory=1024`;
 
-            const keywords = encodeURIComponent(`${role} ${jobType}`);
+            // Use exact role match in keywords by quoting it
+            const keywords = encodeURIComponent(`"${role}" ${jobType}`);
             const encodedLocation = encodeURIComponent(location);
 
             const geoIdMap = {
