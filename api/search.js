@@ -3,7 +3,8 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { role, jobType, datasetId } = req.body;
+    // Support old formats by defaulting location to 'India' if not provided
+    const { role, jobType, datasetId, location = 'India' } = req.body;
     const APIFY_TOKEN = process.env.VITE_APIFY_API_TOKEN;
 
     if (!APIFY_TOKEN) {
@@ -37,7 +38,7 @@ export default async function handler(req, res) {
             if (results.length > 0) {
                 return res.status(200).json(results);
             } else {
-                // Still scraping... Let Vercel know we are just polling and nothing is ready yet
+                // Still scraping...
                 return res.status(202).json({
                     status: 'processing',
                     datasetId: datasetId
@@ -46,19 +47,19 @@ export default async function handler(req, res) {
         }
 
         // SCENARIO 2: Starting a NEW Search
-        console.log(`🚀 Starting new real search via worldunboxer for: ${role}`);
+        console.log(`🚀 Starting new search for: ${role} in ${location}`);
 
-        // We use worldunboxer/rapid-linkedin-scraper as it's highly reliable and actively maintained
         const apiUrl = `https://api.apify.com/v2/acts/worldunboxer~rapid-linkedin-scraper/runs?token=${APIFY_TOKEN}`;
 
-        // Convert Job Type string back to LinkedIn query param text if needed, or just append to keywords
         const keywords = encodeURIComponent(`${role} ${jobType}`);
+        const encodedLocation = encodeURIComponent(location);
+        const linkedInUrl = `https://www.linkedin.com/jobs/search/?keywords=${keywords}&location=${encodedLocation}&f_TPR=r86400`;
 
         const runResponse = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                searchUrls: [{ url: `https://www.linkedin.com/jobs/search/?keywords=${keywords}&f_TPR=r86400` }],
+                searchUrls: [{ url: linkedInUrl }],
                 limit: 15
             })
         });

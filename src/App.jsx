@@ -5,6 +5,7 @@ import './App.css';
 function App() {
   const [role, setRole] = useState('');
   const [jobType, setJobType] = useState('Full-time');
+  const [location, setLocation] = useState('Bengaluru, India');
   const [isLoading, setIsLoading] = useState(false);
   const [jobs, setJobs] = useState([]);
   const [error, setError] = useState(null);
@@ -20,14 +21,14 @@ function App() {
     setStatusMessage('Starting connection to LinkedIn Search...');
 
     try {
-      let result = await searchJobs(role, jobType);
+      let result = await searchJobs(role, jobType, location);
 
       let attempts = 0;
       // Continue polling until we receive an array (results) or reach max attempts
       while (result.status === 'processing' && attempts < 15) {
         setStatusMessage(`Extracting jobs (${attempts + 1}/15)... LinkedIn takes a moment.`);
         await new Promise(r => setTimeout(r, 6000)); // Poll every 6 seconds
-        result = await searchJobs(role, jobType, result.datasetId);
+        result = await searchJobs(role, jobType, location, result.datasetId);
         attempts++;
       }
 
@@ -63,26 +64,41 @@ function App() {
       <main className="main-content">
         <div className="search-card glass">
           <form onSubmit={handleSearch} className="search-form">
-            <div className="input-group">
-              <label>Role</label>
-              <input
-                type="text"
-                placeholder="e.g. Software Engineer"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                required
-              />
+            <div className="input-row">
+              <div className="input-group">
+                <label>Role</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Software Engineer"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="input-group">
+                <label>Job Type</label>
+                <select value={jobType} onChange={(e) => setJobType(e.target.value)}>
+                  <option value="Full-time">Full-time</option>
+                  <option value="Contract">Contract</option>
+                  <option value="Internship">Internship</option>
+                  <option value="Part-time">Part-time</option>
+                </select>
+              </div>
+              <div className="input-group">
+                <label>Location</label>
+                <select value={location} onChange={(e) => setLocation(e.target.value)}>
+                  <option value="India">All India</option>
+                  <option value="Bengaluru, Karnataka, India">Bengaluru</option>
+                  <option value="Mumbai, Maharashtra, India">Mumbai</option>
+                  <option value="Delhi, India">Delhi NCR</option>
+                  <option value="Hyderabad, Telangana, India">Hyderabad</option>
+                  <option value="Pune, Maharashtra, India">Pune</option>
+                  <option value="Chennai, Tamil Nadu, India">Chennai</option>
+                </select>
+              </div>
             </div>
-            <div className="input-group">
-              <label>Job Type</label>
-              <select value={jobType} onChange={(e) => setJobType(e.target.value)}>
-                <option value="Full-time">Full-time</option>
-                <option value="Contract">Contract</option>
-                <option value="Internship">Internship</option>
-                <option value="Part-time">Part-time</option>
-              </select>
-            </div>
-            <button type="submit" disabled={isLoading} className="search-button">
+
+            <button type="submit" disabled={isLoading} className="search-button full-width">
               {isLoading ? (
                 <span className="loader-container">
                   <span className="dot">.</span>
@@ -126,7 +142,7 @@ function App() {
                     <td className="salary">{job.salary}</td>
                     <td className="applicants">
                       <span className={`badge ${job.applicants < 10 && typeof job.applicants === 'number' ? 'early' : ''}`}>
-                        {job.applicants}
+                        {typeof job.applicants === 'number' ? job.applicants : 'N/A'}
                       </span>
                     </td>
                     <td className="posted-date">{job.postedAt}</td>
@@ -143,7 +159,7 @@ function App() {
         )}
 
         {!isLoading && role && jobs.length === 0 && !error && !statusMessage && (
-          <div className="empty-state glass">No recently posted jobs found. Try adjusting keywords.</div>
+          <div className="empty-state glass">No recently posted jobs found. Try adjusting keywords or location.</div>
         )}
       </main>
 

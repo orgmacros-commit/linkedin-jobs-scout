@@ -1,5 +1,5 @@
-export const searchJobs = async (role, jobType, datasetId = null) => {
-    console.log(`🚀 Triggering live search for: ${role} (${jobType}) [Dataset: ${datasetId || 'NEW'}]`);
+export const searchJobs = async (role, jobType, location, datasetId = null) => {
+    console.log(`🚀 Triggering live search for: ${role} (${jobType}) in ${location} [Dataset: ${datasetId || 'NEW'}]`);
 
     try {
         const response = await fetch('/api/search', {
@@ -7,7 +7,7 @@ export const searchJobs = async (role, jobType, datasetId = null) => {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ role, jobType, datasetId }),
+            body: JSON.stringify({ role, jobType, location, datasetId }),
         });
 
         if (!response.ok) {
