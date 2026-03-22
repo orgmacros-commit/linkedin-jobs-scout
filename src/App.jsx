@@ -88,25 +88,6 @@ function App() {
                 </select>
               </div>
               <div className="input-group">
-                <label>Experience</label>
-                <select value={experience} onChange={(e) => setExperience(e.target.value)}>
-                  <option value="Any">Any Experience</option>
-                  <option value="Internship">Internship</option>
-                  <option value="Entry level">Entry level</option>
-                  <option value="Associate">Associate</option>
-                  <option value="Mid-Senior level">Mid-Senior level</option>
-                  <option value="Director">Director</option>
-                  <option value="Executive">Executive</option>
-                </select>
-              </div>
-              <div className="input-group">
-                <label>Mode</label>
-                <select value={searchMode} onChange={(e) => setSearchMode(e.target.value)}>
-                  <option value="jobs">Official Jobs</option>
-                  <option value="posts">Hiring Posts (Direct & Hidden)</option>
-                </select>
-              </div>
-              <div className="input-group">
                 <label>Location</label>
                 <select value={location} onChange={(e) => setLocation(e.target.value)}>
                   <option value="India">All India</option>
@@ -122,7 +103,26 @@ function App() {
 
             <div className="input-row">
               <div className="input-group">
-                <label>Keywords / Tech Stack (Optional)</label>
+                <label>Experience</label>
+                <select value={experience} onChange={(e) => setExperience(e.target.value)}>
+                  <option value="Any">Any Experience</option>
+                  <option value="Internship">Internship</option>
+                  <option value="Entry level">Entry level</option>
+                  <option value="Associate">Associate</option>
+                  <option value="Mid-Senior level">Mid-Senior level</option>
+                  <option value="Director">Director</option>
+                  <option value="Executive">Executive</option>
+                </select>
+              </div>
+              <div className="input-group">
+                <label>Search Mode</label>
+                <select value={searchMode} onChange={(e) => setSearchMode(e.target.value)}>
+                  <option value="jobs">Official Jobs</option>
+                  <option value="posts">Hiring Posts (Direct & Hidden)</option>
+                </select>
+              </div>
+              <div className="input-group">
+                <label>Keywords / Tech Stack</label>
                 <input
                   type="text"
                   placeholder="e.g. React, Remote, B2B"
