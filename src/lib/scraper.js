@@ -1,4 +1,4 @@
-export const searchJobs = async (role, jobType, location, experience, searchMode, datasetId = null) => {
+export const searchJobs = async (role, jobType, location, experience, searchMode, extraKeywords, datasetId = null) => {
     console.log(`🚀 Triggering live search for: ${role} (${jobType}) in ${location} Exp: ${experience} [Mode: ${searchMode}] [Dataset: ${datasetId || 'NEW'}]`);
 
     try {
@@ -7,7 +7,7 @@ export const searchJobs = async (role, jobType, location, experience, searchMode
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ role, jobType, location, experience, searchMode, datasetId }),
+            body: JSON.stringify({ role, jobType, location, experience, searchMode, extraKeywords, datasetId }),
         });
 
         if (!response.ok) {

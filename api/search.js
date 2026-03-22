@@ -4,7 +4,7 @@ export default async function handler(req, res) {
     }
 
     // searchMode is either 'jobs' or 'posts'
-    const { role, jobType, datasetId, location = 'India', searchMode = 'jobs', experience = 'Any' } = req.body;
+    const { role, jobType, datasetId, location = 'India', searchMode = 'jobs', experience = 'Any', extraKeywords = '' } = req.body;
     const APIFY_TOKEN = process.env.VITE_APIFY_API_TOKEN;
 
     if (!APIFY_TOKEN) {
@@ -87,7 +87,8 @@ export default async function handler(req, res) {
 
             // Exact google dork string to find people hiring for this specific role and location
             const expKeyword = experience !== 'Any' ? `"${experience}" OR "years"` : "";
-            const dork = `site:linkedin.com/posts "hiring" OR "looking for" "${role}" "${location}" ${expKeyword}`.trim();
+            const extraDork = extraKeywords ? extraKeywords.split(',').map(k => `"${k.trim()}"`).join(' ') : "";
+            const dork = `site:linkedin.com/posts "hiring" OR "looking for" "${role}" "${location}" ${expKeyword} ${extraDork}`.trim();
 
             reqBody = {
                 queries: dork,
@@ -125,9 +126,10 @@ export default async function handler(req, res) {
             const linkedInUrl = `https://www.linkedin.com/jobs/search/?keywords=${keywords}&location=${encodedLocation}&geoId=${geoId}${expParam}&f_TPR=r86400`;
 
             const expSuffix = experience !== 'Any' ? ` ${experience}` : '';
+            const keySuffix = extraKeywords ? ` ${extraKeywords.replace(/,/g, ' ')}` : '';
             reqBody = {
                 searchUrls: [{ url: linkedInUrl }],
-                keyword: `${role} ${jobType}${expSuffix}`.trim(),
+                keyword: `${role} ${jobType}${expSuffix}${keySuffix}`.trim(),
                 location: location,
                 limit: 15
             };

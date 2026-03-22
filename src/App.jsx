@@ -8,6 +8,7 @@ function App() {
   const [location, setLocation] = useState('Bengaluru, Karnataka, India');
   const [experience, setExperience] = useState('Any');
   const [searchMode, setSearchMode] = useState('jobs');
+  const [extraKeywords, setExtraKeywords] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [jobs, setJobs] = useState([]);
   const [error, setError] = useState(null);
@@ -23,14 +24,14 @@ function App() {
     setStatusMessage('Starting connection to LinkedIn Search...');
 
     try {
-      let result = await searchJobs(role, jobType, location, experience, searchMode);
+      let result = await searchJobs(role, jobType, location, experience, searchMode, extraKeywords);
 
       let attempts = 0;
       // Continue polling until we receive an array (results) or reach max attempts
       while (result.status === 'processing' && attempts < 15) {
         setStatusMessage(`Extracting ${searchMode} (${attempts + 1}/15)... LinkedIn takes a moment.`);
         await new Promise(r => setTimeout(r, 6000)); // Poll every 6 seconds
-        result = await searchJobs(role, jobType, location, experience, searchMode, result.datasetId);
+        result = await searchJobs(role, jobType, location, experience, searchMode, extraKeywords, result.datasetId);
         attempts++;
       }
 
@@ -116,6 +117,18 @@ function App() {
                   <option value="Pune, Maharashtra, India">Pune</option>
                   <option value="Chennai, Tamil Nadu, India">Chennai</option>
                 </select>
+              </div>
+            </div>
+
+            <div className="input-row">
+              <div className="input-group">
+                <label>Keywords / Tech Stack (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. React, Remote, B2B"
+                  value={extraKeywords}
+                  onChange={(e) => setExtraKeywords(e.target.value)}
+                />
               </div>
             </div>
 
