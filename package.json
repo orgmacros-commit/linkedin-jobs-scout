@@ -10,9 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "apify-client": "^2.22.3",
     "dotenv": "^17.3.1",
-    "proxy-agent": "^7.0.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
