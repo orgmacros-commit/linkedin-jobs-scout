@@ -52,8 +52,20 @@ export default async function handler(req, res) {
         const apiUrl = `https://api.apify.com/v2/acts/worldunboxer~rapid-linkedin-scraper/runs?token=${APIFY_TOKEN}`;
 
         const keywords = encodeURIComponent(`${role} ${jobType}`);
-        const encodedLocation = encodeURIComponent(location);
-        const linkedInUrl = `https://www.linkedin.com/jobs/search/?keywords=${keywords}&location=${encodedLocation}&f_TPR=r86400`;
+
+        // Map Metro cities to their exact LinkedIn geoIds to override Apify proxies
+        const geoIdMap = {
+            'Bengaluru, Karnataka, India': '105214831',
+            'Mumbai, Maharashtra, India': '104300300',
+            'Delhi, India': '103671728',
+            'Hyderabad, Telangana, India': '105556991',
+            'Pune, Maharashtra, India': '106888327',
+            'Chennai, Tamil Nadu, India': '107410880',
+            'India': '102713980'
+        };
+
+        const geoId = geoIdMap[location] || '102713980'; // Default to India
+        const linkedInUrl = `https://www.linkedin.com/jobs/search/?keywords=${keywords}&geoId=${geoId}&f_TPR=r86400`;
 
         const runResponse = await fetch(apiUrl, {
             method: 'POST',
