@@ -20,25 +20,31 @@ function App() {
     setStatusMessage('Searching LinkedIn for the latest postings...');
 
     try {
-      // 1. First attempt
       const result = await searchJobs(role, jobType);
 
-      // 2. Handle partial or pending results
       if (result.status === 'processing') {
         setStatusMessage(result.message);
-        // Automatically attempt one retry after 10 seconds
-        await new Promise(r => setTimeout(r, 10000));
-        const secondAttempt = await searchJobs(role, jobType);
-        if (secondAttempt.length > 0) {
-          setJobs(secondAttempt);
-        } else {
-          setError('LinkedIn is busy. Please try again in 1 minute.');
+        // Retry polling loop (simpler version for UX)
+        let attempts = 0;
+        let successful = false;
+        while (attempts < 3 && !successful) {
+          await new Promise(r => setTimeout(r, 8000));
+          attempts++;
+          const retryResult = await searchJobs(role, jobType);
+          if (Array.isArray(retryResult) && retryResult.length > 0) {
+            setJobs(retryResult);
+            successful = true;
+          }
+        }
+        if (!successful && jobs.length === 0) {
+          setError('LinkedIn is taking a long time. Please try clicking search again in a moment.');
         }
       } else {
         setJobs(result);
       }
     } catch (err) {
-      setError('LinkedIn Search Error. Please try again or check your API key.');
+      // SHOW SPECIFIC ERROR
+      setError(`Search Error: ${err.message || 'Something went wrong.'}`);
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -95,15 +101,14 @@ function App() {
           </form>
         </div>
 
-        {statusMessage && <div className="loading-state glass">{statusMessage}</div>}
-        {error && <div className="error-message glass">{error}</div>}
-
-        {isLoading && !statusMessage && (
+        {statusMessage && (
           <div className="loading-state glass">
             <div className="claude-shimmer"></div>
-            <p>Wait, I'm checking LinkedIn for the latest postings...</p>
+            <p>{statusMessage}</p>
           </div>
         )}
+
+        {error && <div className="error-message glass">{error}</div>}
 
         {!isLoading && jobs.length > 0 && (
           <div className="results-table-container glass animate-in">
@@ -145,7 +150,7 @@ function App() {
         )}
 
         {!isLoading && role && jobs.length === 0 && !error && !statusMessage && (
-          <div className="empty-state glass">No jobs found in the last 24 hours for this role.</div>
+          <div className="empty-state glass">No recently posted jobs found. Try adjusting keywords.</div>
         )}
       </main>
 
