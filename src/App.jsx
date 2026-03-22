@@ -6,6 +6,7 @@ function App() {
   const [role, setRole] = useState('');
   const [jobType, setJobType] = useState('Full-time');
   const [location, setLocation] = useState('Bengaluru, Karnataka, India');
+  const [searchMode, setSearchMode] = useState('jobs');
   const [isLoading, setIsLoading] = useState(false);
   const [jobs, setJobs] = useState([]);
   const [error, setError] = useState(null);
@@ -21,14 +22,14 @@ function App() {
     setStatusMessage('Starting connection to LinkedIn Search...');
 
     try {
-      let result = await searchJobs(role, jobType, location);
+      let result = await searchJobs(role, jobType, location, searchMode);
 
       let attempts = 0;
       // Continue polling until we receive an array (results) or reach max attempts
       while (result.status === 'processing' && attempts < 15) {
         setStatusMessage(`Extracting jobs (${attempts + 1}/15)... LinkedIn takes a moment.`);
         await new Promise(r => setTimeout(r, 6000)); // Poll every 6 seconds
-        result = await searchJobs(role, jobType, location, result.datasetId);
+        result = await searchJobs(role, jobType, location, searchMode, result.datasetId);
         attempts++;
       }
 
@@ -82,6 +83,13 @@ function App() {
                   <option value="Contract">Contract</option>
                   <option value="Internship">Internship</option>
                   <option value="Part-time">Part-time</option>
+                </select>
+              </div>
+              <div className="input-group">
+                <label>Mode</label>
+                <select value={searchMode} onChange={(e) => setSearchMode(e.target.value)}>
+                  <option value="jobs">Official Jobs</option>
+                  <option value="posts">Hiring Posts (Direct & Hidden)</option>
                 </select>
               </div>
               <div className="input-group">
