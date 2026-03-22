@@ -6,6 +6,7 @@ function App() {
   const [role, setRole] = useState('');
   const [jobType, setJobType] = useState('Full-time');
   const [location, setLocation] = useState('Bengaluru, Karnataka, India');
+  const [experience, setExperience] = useState('Any');
   const [searchMode, setSearchMode] = useState('jobs');
   const [isLoading, setIsLoading] = useState(false);
   const [jobs, setJobs] = useState([]);
@@ -22,14 +23,14 @@ function App() {
     setStatusMessage('Starting connection to LinkedIn Search...');
 
     try {
-      let result = await searchJobs(role, jobType, location, searchMode);
+      let result = await searchJobs(role, jobType, location, experience, searchMode);
 
       let attempts = 0;
       // Continue polling until we receive an array (results) or reach max attempts
       while (result.status === 'processing' && attempts < 15) {
-        setStatusMessage(`Extracting jobs (${attempts + 1}/15)... LinkedIn takes a moment.`);
+        setStatusMessage(`Extracting ${searchMode} (${attempts + 1}/15)... LinkedIn takes a moment.`);
         await new Promise(r => setTimeout(r, 6000)); // Poll every 6 seconds
-        result = await searchJobs(role, jobType, location, searchMode, result.datasetId);
+        result = await searchJobs(role, jobType, location, experience, searchMode, result.datasetId);
         attempts++;
       }
 
@@ -83,6 +84,18 @@ function App() {
                   <option value="Contract">Contract</option>
                   <option value="Internship">Internship</option>
                   <option value="Part-time">Part-time</option>
+                </select>
+              </div>
+              <div className="input-group">
+                <label>Experience</label>
+                <select value={experience} onChange={(e) => setExperience(e.target.value)}>
+                  <option value="Any">Any Experience</option>
+                  <option value="Internship">Internship</option>
+                  <option value="Entry level">Entry level</option>
+                  <option value="Associate">Associate</option>
+                  <option value="Mid-Senior level">Mid-Senior level</option>
+                  <option value="Director">Director</option>
+                  <option value="Executive">Executive</option>
                 </select>
               </div>
               <div className="input-group">

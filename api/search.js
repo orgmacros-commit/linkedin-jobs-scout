@@ -4,7 +4,7 @@ export default async function handler(req, res) {
     }
 
     // searchMode is either 'jobs' or 'posts'
-    const { role, jobType, datasetId, location = 'India', searchMode = 'jobs' } = req.body;
+    const { role, jobType, datasetId, location = 'India', searchMode = 'jobs', experience = 'Any' } = req.body;
     const APIFY_TOKEN = process.env.VITE_APIFY_API_TOKEN;
 
     if (!APIFY_TOKEN) {
@@ -78,7 +78,7 @@ export default async function handler(req, res) {
         }
 
         // SCENARIO 2: Starting a NEW Search
-        console.log(`🚀 Starting new search for: ${role} in ${location} [Mode: ${searchMode}]`);
+        console.log(`🚀 Starting new search for: ${role} in ${location} Exp: ${experience} [Mode: ${searchMode}]`);
 
         let apiUrl, reqBody;
 
@@ -86,7 +86,8 @@ export default async function handler(req, res) {
             apiUrl = `https://api.apify.com/v2/acts/apify~google-search-scraper/runs?token=${APIFY_TOKEN}&memory=1024`;
 
             // Exact google dork string to find people hiring for this specific role and location
-            const dork = `site:linkedin.com/posts "hiring" OR "looking for" "${role}" "${location}"`;
+            const expKeyword = experience !== 'Any' ? `"${experience}" OR "years"` : "";
+            const dork = `site:linkedin.com/posts "hiring" OR "looking for" "${role}" "${location}" ${expKeyword}`.trim();
 
             reqBody = {
                 queries: dork,
@@ -95,7 +96,36 @@ export default async function handler(req, res) {
             };
         } else {
             apiUrl = `https://api.apify.com/v2/acts/worldunboxer~rapid-linkedin-scraper/runs?token=${APIFY_TOKEN}&memory=1024`;
+
+            const keywords = encodeURIComponent(`${role} ${jobType}`);
+            const encodedLocation = encodeURIComponent(location);
+
+            const geoIdMap = {
+                'Bengaluru, Karnataka, India': '105214831',
+                'Mumbai, Maharashtra, India': '104300300',
+                'Delhi, India': '103671728',
+                'Hyderabad, Telangana, India': '105556991',
+                'Pune, Maharashtra, India': '106888327',
+                'Chennai, Tamil Nadu, India': '107410880',
+                'India': '102713980'
+            };
+            const geoId = geoIdMap[location] || '102713980';
+
+            const expMap = {
+                'Internship': '1',
+                'Entry level': '2',
+                'Associate': '3',
+                'Mid-Senior level': '4',
+                'Director': '5',
+                'Executive': '6'
+            };
+            const f_E = expMap[experience] || '';
+            const expParam = f_E ? `&f_E=${f_E}` : '';
+
+            const linkedInUrl = `https://www.linkedin.com/jobs/search/?keywords=${keywords}&location=${encodedLocation}&geoId=${geoId}${expParam}&f_TPR=r86400`;
+
             reqBody = {
+                searchUrls: [{ url: linkedInUrl }],
                 keyword: `${role} ${jobType}`.trim(),
                 location: location,
                 limit: 15
